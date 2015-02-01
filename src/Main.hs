@@ -6,12 +6,14 @@ import Control.Monad.Trans (liftIO)
 import Data.Word
 import Data.Array.MArray
 import Data.ByteString.Unsafe
-import Data.ByteString
+import Data.ByteString hiding (putStrLn)
+import Data.Text hiding (pack)
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Glade
 import Graphics.UI.Gtk.Gdk.Pixbuf  
 import Graphics.UI.Gtk.Gdk.Screen
+import Graphics.UI.Gtk.Gdk.EventM
 
 import Ocr
 
@@ -45,12 +47,26 @@ loadGlade gladePath =
 
 bindGuiEvents gui =
     do onDestroy (win gui) mainQuit
+       Just screen <- screenGetDefault
+       window <- screenGetRootWindow screen
+       --windowPropagateKeyEvent window $ do
+       --   [Control] <- eventModifier
+       --   "Return" <- eventKeyName
+       --   return 
+       dw <- widgetGetDrawWindow (win gui)
+       _ <- pointerGrab dw False [AllEventsMask] (Nothing :: Maybe DrawWindow) Nothing currentTime
+       on (win gui) keyPressEvent $ tryEvent $ do
+          [Control] <- eventModifier
+          "Return" <- eventKeyName
+          liftIO $ putStrLn "Ctrl-Return pressed"
        on (win gui) configureEvent $ liftIO $ setSourceImage gui >> return False
        timeoutAdd (timedScreenshot gui) 25
 
 -- | Helper for taking screenshot in every time interval.
 timedScreenshot gui =
     do setSourceImage gui
+       --t <- ocrGuiImage (source gui)
+       --set (translated gui) [ labelText := "_" ++ (show t) ++ "_" ]
        return True
 
 -- | Take screenshot and set it in the image GUI widget.
@@ -62,6 +78,8 @@ ensureLimits x mn mx = min mx (max x mn)
 -- | Compute correct size from origin, given size and maximum size.
 computeSize o s m = if o + s <= m then s else m - o
 
+overlap x xw o ow = or [and [(x <= o), (x + xw >= o)], and [(x <= o + ow), (x + xw >= o + ow)]]
+
 -- | Take a screenshot of a portion of a screen around the mouse pointer.
 screenShot :: GUI -> IO Pixbuf
 screenShot gui =
@@ -72,26 +90,36 @@ screenShot gui =
 
        -- Get current pointer position.
        (_, x, y, _) <- drawWindowGetPointerPos window
-
+       -- Handle overlap of source rectangle and draw window.
+       -- Get widget dimensions.
+       ws@(ww, wh) <- widgetGetSize (source gui)
+       -- Get widget origin (coordinates of upper left corner).
+       (wx, wy) <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
        -- Compute screenshot origin and size so that
        -- mouse pointer is in the middle.
-       (ww, wh) <- widgetGetSize (source gui)
        let origin@(ox, oy) = (ensureLimits (x - ww `div` 2) 0 mw,
                               ensureLimits (y - wh `div` 2) 0 mh)
-       let size = (computeSize ox ww mw, computeSize oy wh mh)
+           size = (computeSize ox ww mw, computeSize oy wh mh)
+
        Just pxbuf <- pixbufGetFromDrawable window
            ((uncurry . uncurry Rectangle) origin size)
-       return pxbuf
+
+       if and [overlap wx ww ox ww, overlap wy wh oy wh]
+         then imageGetPixbuf (source gui) >>= return
+         else return pxbuf
 
 pixBufToByteString :: Pixbuf -> IO [Word8]
 pixBufToByteString pixbuf =
     do pbd <- (pixbufGetPixels pixbuf :: IO (PixbufData Int Word8))
-       --arr <- readArray pbd 0
        arr <- getElems pbd
        return arr
 
-ocrPixBuf :: Pixbuf -> IO String
+ocrPixBuf :: Pixbuf -> IO Text
 ocrPixBuf pixbuf =
     do img <- pixBufToByteString pixbuf
        text <- ocrImage $ pack img
        return text
+
+ocrGuiImage img =
+    do pxb <- imageGetPixbuf img
+       ocrPixBuf pxb

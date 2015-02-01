@@ -26,5 +26,6 @@ executable rtit
     mtl,
     bytestring,
     array,
+    text,
     htesseract-ocr
   hs-source-dirs:      src

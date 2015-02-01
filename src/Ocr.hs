@@ -2,13 +2,11 @@ module Ocr where
 
 import Text.OCR.Tesseract
 import Data.ByteString
---import Data.Text
-
+import Data.Text
 
 -- | Read written text from an image.
-ocrImage :: ByteString -> IO String
+ocrImage :: ByteString -> IO Text
 ocrImage imgBS =
-    do let config = TesseractConfig tessdataDir "eng"
+    do let config = TesseractConfig (Just "/tmp/tess") "eng"
        res <- withTesseractConfig config $ withImageBS imgBS getRecognizedText
-       return "bla"
-       --checkRecognizedText [res] image1TextLines
+       return res
