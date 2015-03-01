@@ -2,12 +2,13 @@ module Main where
 
 import System.Environment
 import Control.Monad.Trans (liftIO)
+import Prelude hiding (readFile)
 
 import Data.Word
 import Data.Array.MArray
 import Data.ByteString.Unsafe
-import Data.ByteString hiding (putStrLn)
-import Data.Text hiding (pack)
+import Data.ByteString hiding (putStrLn, unpack)
+import Data.Text as T hiding (pack)
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Glade
@@ -53,20 +54,19 @@ bindGuiEvents gui =
        --   [Control] <- eventModifier
        --   "Return" <- eventKeyName
        --   return 
-       dw <- widgetGetDrawWindow (win gui)
-       _ <- pointerGrab dw False [AllEventsMask] (Nothing :: Maybe DrawWindow) Nothing currentTime
-       on (win gui) keyPressEvent $ tryEvent $ do
-          [Control] <- eventModifier
-          "Return" <- eventKeyName
-          liftIO $ putStrLn "Ctrl-Return pressed"
-       on (win gui) configureEvent $ liftIO $ setSourceImage gui >> return False
+       --dw <- widgetGetDrawWindow (win gui)
+       --_ <- pointerGrab dw False [AllEventsMask] (Nothing :: Maybe DrawWindow) Nothing currentTime
+       --on (win gui) keyPressEvent $ tryEvent $ do
+       --   [Control] <- eventModifier
+       --   "Return" <- eventKeyName
+       --   liftIO $ putStrLn "Ctrl-Return pressed"
+       --on (win gui) configureEvent $ liftIO $ setSourceImage gui >> return False
        timeoutAdd (timedScreenshot gui) 25
+       timeoutAdd (timedTranslate gui) 3000
 
 -- | Helper for taking screenshot in every time interval.
 timedScreenshot gui =
     do setSourceImage gui
-       --t <- ocrGuiImage (source gui)
-       --set (translated gui) [ labelText := "_" ++ (show t) ++ "_" ]
        return True
 
 -- | Take screenshot and set it in the image GUI widget.
@@ -108,6 +108,12 @@ screenShot gui =
          then imageGetPixbuf (source gui) >>= return
          else return pxbuf
 
+
+timedTranslate gui =
+    do t <- ocrGuiImage (source gui)
+       set (translated gui) [ labelText := "_" ++ (show t) ++ "_" ]
+       return True
+
 pixBufToByteString :: Pixbuf -> IO [Word8]
 pixBufToByteString pixbuf =
     do pbd <- (pixbufGetPixels pixbuf :: IO (PixbufData Int Word8))
@@ -121,5 +127,24 @@ ocrPixBuf pixbuf =
        return text
 
 ocrGuiImage img =
-    do pxb <- imageGetPixbuf img
-       ocrPixBuf pxb
+    do pxbf <- imageGetPixbuf img
+       imageType <- get img imageStorageType
+       pixbufSave pxbf "4590temporary39403image39405path39403.png" "png" []
+       locr "4590temporary39403image39405path39403.png"
+       --if imageType == ImagePixbuf then (return $ locr "4590temporary39403image39405path39403.png") else ("No img"::String) >>= return
+
+locr p =
+    do imgBS <- readFile p
+       ocrImage imgBS >>= return
+
+--ocrGuiImage2 :: Image -> IO [Char]
+--ocrGuiImage2 img =
+--    do pxbf <- imageGetPixbuf img
+--       imageType <- get pxbf imageStorageType
+--       --if imageType == ImagePixbuf
+--       --  then
+--       --    imageGetPixbuf img >>= ocrPixBuf >>= return
+--         --then do
+--         --  pxb <- imageGetPixbuf img
+--         --  return $ ocrPixBuf pxb
+--       if imageType == ImagePixbuf then (imageGetPixbuf img >>= ocrPixBuf >>= unpack >>= return) else return "No img"
