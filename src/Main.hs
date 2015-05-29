@@ -8,7 +8,7 @@ import Data.Word
 import Data.Array.MArray
 import Data.ByteString.Unsafe
 import Data.ByteString hiding (putStrLn, unpack)
-import Data.Text as T hiding (pack)
+import Data.Text as T
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Glade
@@ -50,17 +50,6 @@ bindGuiEvents gui =
     do onDestroy (win gui) mainQuit
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
-       --windowPropagateKeyEvent window $ do
-       --   [Control] <- eventModifier
-       --   "Return" <- eventKeyName
-       --   return 
-       --dw <- widgetGetDrawWindow (win gui)
-       --_ <- pointerGrab dw False [AllEventsMask] (Nothing :: Maybe DrawWindow) Nothing currentTime
-       --on (win gui) keyPressEvent $ tryEvent $ do
-       --   [Control] <- eventModifier
-       --   "Return" <- eventKeyName
-       --   liftIO $ putStrLn "Ctrl-Return pressed"
-       --on (win gui) configureEvent $ liftIO $ setSourceImage gui >> return False
        timeoutAdd (timedScreenshot gui) 25
        timeoutAdd (timedTranslate gui) 3000
 
@@ -105,14 +94,26 @@ screenShot gui =
            ((uncurry . uncurry Rectangle) origin size)
 
        if and [overlap wx ww ox ww, overlap wy wh oy wh]
-         then imageGetPixbuf (source gui) >>= return
+         then
+           do imgPxbf <- imageToPixbuf (source gui)
+              case imgPxbf of
+                Just px -> return px
+                Nothing -> return pxbuf
          else return pxbuf
-
 
 timedTranslate gui =
     do t <- ocrGuiImage (source gui)
        set (translated gui) [ labelText := "_" ++ (show t) ++ "_" ]
        return True
+
+imageToPixbuf :: Image -> IO (Maybe Pixbuf)
+imageToPixbuf img =
+    do imageType <- get img imageStorageType
+       if imageType == ImagePixbuf
+         then
+           do pxbf <- imageGetPixbuf img
+              return $ Just pxbf
+         else return Nothing
 
 pixBufToByteString :: Pixbuf -> IO [Word8]
 pixBufToByteString pixbuf =
@@ -120,31 +121,21 @@ pixBufToByteString pixbuf =
        arr <- getElems pbd
        return arr
 
-ocrPixBuf :: Pixbuf -> IO Text
-ocrPixBuf pixbuf =
-    do img <- pixBufToByteString pixbuf
-       text <- ocrImage $ pack img
-       return text
+--ocrPixBuf :: Pixbuf -> IO Text
+--ocrPixBuf pixbuf =
+--    do img <- pixBufToByteString pixbuf
+--       text <- ocrImage $ pack img
+--       return text
 
+ocrGuiImage :: Image -> IO Text
 ocrGuiImage img =
-    do pxbf <- imageGetPixbuf img
-       imageType <- get img imageStorageType
-       pixbufSave pxbf "4590temporary39403image39405path39403.png" "png" []
-       locr "4590temporary39403image39405path39403.png"
-       --if imageType == ImagePixbuf then (return $ locr "4590temporary39403image39405path39403.png") else ("No img"::String) >>= return
+   do imgPxbf <- imageToPixbuf img
+      case imgPxbf of
+        Just px -> 
+          do pixbufSave px "4590temporary39403image39405path39403.png" "png" []
+             locr "4590temporary39403image39405path39403.png"
+        Nothing -> return $ T.pack "-"
 
 locr p =
     do imgBS <- readFile p
        ocrImage imgBS >>= return
-
---ocrGuiImage2 :: Image -> IO [Char]
---ocrGuiImage2 img =
---    do pxbf <- imageGetPixbuf img
---       imageType <- get pxbf imageStorageType
---       --if imageType == ImagePixbuf
---       --  then
---       --    imageGetPixbuf img >>= ocrPixBuf >>= return
---         --then do
---         --  pxb <- imageGetPixbuf img
---         --  return $ ocrPixBuf pxb
---       if imageType == ImagePixbuf then (imageGetPixbuf img >>= ocrPixBuf >>= unpack >>= return) else return "No img"

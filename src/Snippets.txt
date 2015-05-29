@@ -1,3 +1,0 @@
-
-       --set (translated gui) [ labelText := (show x) ++ " " ++ (show y) ]
-       --set (input gui) [ entryText := (show x) ++ " " ++ (show y) ]
