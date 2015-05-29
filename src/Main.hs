@@ -36,8 +36,18 @@ main =
        bindGuiEvents gui
        mainGUI
 
+-- | Path to the Tesseract config
+-- TODO(ikr): Make it a command line argument.
+tesseractCfgPath :: String
+tesseractCfgPath = "/home/ikr/radni/tess"
+
+-- | Language of a text we want to OCR.
+-- TODO(ikr): Make it a command line argument.
+lang :: String
+lang = "eng"
+
 -- | Load XML from glade path.
--- Note: crashes with a runtime error on console if fails!
+-- Note: crashes with a runtime error in console if fails!
 loadGlade gladePath =
     do Just xml <- xmlNew gladePath
        gwin <- xmlGetWidget xml castToWindow "translatorWin"
@@ -121,21 +131,25 @@ pixBufToByteString pixbuf =
        arr <- getElems pbd
        return arr
 
---ocrPixBuf :: Pixbuf -> IO Text
---ocrPixBuf pixbuf =
---    do img <- pixBufToByteString pixbuf
---       text <- ocrImage $ pack img
---       return text
-
 ocrGuiImage :: Image -> IO Text
 ocrGuiImage img =
    do imgPxbf <- imageToPixbuf img
       case imgPxbf of
         Just px -> 
+          -- TODO(ikr): Don't write stuff to disk, make everything in-memory.
           do pixbufSave px "4590temporary39403image39405path39403.png" "png" []
-             locr "4590temporary39403image39405path39403.png"
+             ocrStoredImage "4590temporary39403image39405path39403.png"
         Nothing -> return $ T.pack "-"
 
-locr p =
-    do imgBS <- readFile p
-       ocrImage imgBS >>= return
+-- | OCR image which is stored on the disk.
+-- TODO(ikr): Make it accept Pixbuf directly. Skip the disk.
+ocrStoredImage :: String -> IO Text
+ocrStoredImage imgPath =
+    do imgBS <- readFile imgPath
+       ocrImage imgBS tesseractCfgPath lang >>= return
+
+--ocrPixBuf :: Pixbuf -> IO Text
+--ocrPixBuf pixbuf =
+--    do img <- pixBufToByteString pixbuf
+--       text <- ocrImage $ pack img
+--       return text
