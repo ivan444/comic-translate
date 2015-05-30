@@ -27,5 +27,10 @@ executable rtit
     bytestring,
     array,
     text,
+    wreq,
+    lens,
+    lens-aeson,
+    vector,
+    aeson,
     htesseract-ocr
   hs-source-dirs:      src

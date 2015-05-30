@@ -17,6 +17,7 @@ import Graphics.UI.Gtk.Gdk.Screen
 import Graphics.UI.Gtk.Gdk.EventM
 
 import Ocr
+import TranslateAPI
 
 import Paths_rtit(getDataFileName)
 
@@ -60,11 +61,11 @@ bindGuiEvents gui =
     do onDestroy (win gui) mainQuit
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
-       timeoutAdd (timedScreenshot gui) 25
-       timeoutAdd (timedTranslate gui) 3000
+       timeoutAdd (captureScreenshot gui) 25
+       timeoutAdd (translateText gui) 3000
 
 -- | Helper for taking screenshot in every time interval.
-timedScreenshot gui =
+captureScreenshot gui =
     do setSourceImage gui
        return True
 
@@ -111,9 +112,12 @@ screenShot gui =
                 Nothing -> return pxbuf
          else return pxbuf
 
-timedTranslate gui =
+-- | Take OCR'd text from GUI and translate it by using translation web service.
+translateText :: GUI -> IO Bool
+translateText gui =
     do t <- ocrGuiImage (source gui)
-       set (translated gui) [ labelText := "_" ++ (show t) ++ "_" ]
+       transText <- translate yandexApiKey "en" "de" (T.unpack t)
+       set (translated gui) [ labelText := "_" ++ (show transText) ++ "_" ]
        return True
 
 imageToPixbuf :: Image -> IO (Maybe Pixbuf)
