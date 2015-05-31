@@ -30,5 +30,5 @@ yandexTranslate apiKey sourceLang destLang text =
      r <- W.get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++ translateParams
      let textVec = r ^. responseBody . key "text" . _Array
      return $ unpackString $ textVec ! 0
+  where unpackString (String s) = s
 
-unpackString (String s) = s
