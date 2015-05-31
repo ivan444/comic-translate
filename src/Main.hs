@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main where
 
 import Control.Monad.Trans (liftIO)
@@ -12,14 +14,21 @@ import Data.Word
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.EventM
-import Graphics.UI.Gtk.Gdk.Pixbuf  
+import Graphics.UI.Gtk.Gdk.Pixbuf
 import Graphics.UI.Gtk.Gdk.Screen
 import Graphics.UI.Gtk.Glade
+
+import HFlags
 
 import Ocr
 import TranslateAPI
 
 import Paths_rtit(getDataFileName)
+
+defineFlag "lang" "eng" "Language of a text we want to OCR"
+
+defineFlag "tesseractCfgPath" "/home/ikr/radni/tess" "Path to the Tesseract config"
+$(return []) -- workaround for https://github.com/nilcons/hflags/issues/8
 
 data GUI = GUI {
   win :: Window,
@@ -32,22 +41,13 @@ yandexApiKey = "trnsl.1.1.20141206T232937Z.afa78ec902bc2385.64360501ae9af320dd9d
 -- | Start GUI.
 main :: IO ()
 main =
-    do initGUI
+    do $initHFlags "Desktop app for realtime translation of web comics"
+       initGUI
        -- Load the GUI from the Glade file
        gladePath <- getDataFileName "gui/rtit.glade"
        gui <- loadGlade gladePath
        bindGuiEvents gui (YandexClient yandexApiKey)
        mainGUI
-
--- | Path to the Tesseract config
--- TODO(ikr): Make it a command line argument.
-tesseractCfgPath :: String
-tesseractCfgPath = "/home/ikr/radni/tess"
-
--- | Language of a text we want to OCR.
--- TODO(ikr): Make it a command line argument.
-lang :: String
-lang = "eng"
 
 -- | Load XML from glade path.
 -- Note: crashes with a runtime error in console if fails!
@@ -76,7 +76,7 @@ captureScreenshot gui =
 
 -- | Take screenshot and set it in the image GUI widget.
 setSourceImage :: GUI -> IO ()
-setSourceImage gui = screenShot gui >>= imageSetFromPixbuf (source gui) 
+setSourceImage gui = screenShot gui >>= imageSetFromPixbuf (source gui)
 
 -- | Ensure value is between given limits (mn and mx)
 ensureLimits :: Ord a => a -> a -> a -> a
@@ -148,7 +148,7 @@ ocrGuiImage :: Image -> IO Text
 ocrGuiImage img =
    do imgPxbf <- imageToPixbuf img
       case imgPxbf of
-        Just px -> 
+        Just px ->
           -- TODO(ikr): Don't write stuff to disk, make everything in-memory.
           do pixbufSave px "4590temporary39403image39405path39403.png" "png" []
              ocrStoredImage "4590temporary39403image39405path39403.png"
@@ -159,7 +159,7 @@ ocrGuiImage img =
 ocrStoredImage :: String -> IO Text
 ocrStoredImage imgPath =
     do imgBS <- readFile imgPath
-       ocrImage imgBS tesseractCfgPath lang >>= return
+       ocrImage imgBS flags_tesseractCfgPath flags_lang >>= return
 
 -- TODO(ikr): Use this instead of writing file to disk
 --ocrPixBuf :: Pixbuf -> IO Text
