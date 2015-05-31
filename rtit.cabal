@@ -29,6 +29,7 @@ executable rtit
     hflags,
     htesseract-ocr,
     HTTP,
+    http-client,
     lens,
     lens-aeson,
     mtl,

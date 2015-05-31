@@ -2,13 +2,15 @@
 
 module TranslateAPI where
 
+import Control.Exception as E
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Lens (_Array, key)
-import Data.Text
+import Data.Text (Text)
 import Data.Vector ((!))
 import Network.HTTP.Base (urlEncodeVars)
-import Network.Wreq as W
+import Network.Wreq (get, responseBody)
+import Network.HTTP.Client (HttpException)
 
 type SourceLanguage = String
 type DestinationLanguage = String
@@ -26,9 +28,11 @@ instance Translator YandexClient where
 
 -- | Translate text from the source language to the destination language using Yandex web service. 
 yandexTranslate apiKey sourceLang destLang text =
-  do let translateParams = urlEncodeVars [("key", apiKey), ("lang", sourceLang ++ "-" ++ destLang), ("text", text)]
-     r <- W.get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++ translateParams
-     let textVec = r ^. responseBody . key "text" . _Array
-     return $ unpackString $ textVec ! 0
+  (do let translateParams = urlEncodeVars [("key", apiKey), ("lang", sourceLang ++ "-" ++ destLang), ("text", text)]
+      r <- get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++ translateParams
+      let textVec = r ^. responseBody . key "text" . _Array
+      return $ unpackString $ textVec ! 0
+  ) `E.catch` handler
   where unpackString (String s) = s
-
+        handler :: HttpException -> IO Text
+        handler _ = return ""
