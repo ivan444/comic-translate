@@ -1,8 +1,8 @@
 module Ocr where
 
-import Text.OCR.Tesseract
 import Data.ByteString hiding (pack)
 import Data.Text
+import Text.OCR.Tesseract
 
 -- | Read written text from an image.
 ocrImage :: ByteString -> String -> String -> IO Text

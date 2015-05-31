@@ -32,5 +32,6 @@ executable rtit
     lens-aeson,
     vector,
     aeson,
+    text-format-simple,
     htesseract-ocr
   hs-source-dirs:      src

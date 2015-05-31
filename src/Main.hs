@@ -1,20 +1,20 @@
 module Main where
 
-import System.Environment
 import Control.Monad.Trans (liftIO)
 import Prelude hiding (readFile)
+import System.Environment
 
-import Data.Word
 import Data.Array.MArray
-import Data.ByteString.Unsafe
 import Data.ByteString hiding (putStrLn, unpack)
+import Data.ByteString.Unsafe
 import Data.Text as T
+import Data.Word
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
-import Graphics.UI.Gtk.Glade
+import Graphics.UI.Gtk.Gdk.EventM
 import Graphics.UI.Gtk.Gdk.Pixbuf  
 import Graphics.UI.Gtk.Gdk.Screen
-import Graphics.UI.Gtk.Gdk.EventM
+import Graphics.UI.Gtk.Glade
 
 import Ocr
 import TranslateAPI

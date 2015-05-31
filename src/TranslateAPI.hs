@@ -2,12 +2,13 @@
 
 module TranslateAPI where
 
-import Network.Wreq as W
 import Control.Lens
-import Data.Aeson.Lens (_Array, key)
 import Data.Aeson
-import qualified Data.Vector as V
+import Data.Aeson.Lens (_Array, key)
 import Data.Text
+import Data.Vector ((!))
+import Network.Wreq as W
+import Text.Format (format)
 
 type SourceLanguage = String
 type DestinationLanguage = String
@@ -25,9 +26,8 @@ instance Translator YandexClient where
 
 -- | Translate text from the source language to the destination language using Yandex web service. 
 yandexTranslate apiKey sourceLang destLang text =
-  -- TODO(ikr): Use some formating library to build this string
-  do r <- W.get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?key=" ++ apiKey ++ "&lang=" ++ sourceLang ++ "-" ++ destLang ++ "&text=" ++ text
+  do r <- W.get $ format "https://translate.yandex.net/api/v1.5/tr.json/translate?key={0}&lang={1}-{2}&text={3}" [apiKey, sourceLang, destLang, text]
      let textVec = r ^. responseBody . key "text" . _Array
-     return $ unpackString $ textVec V.! 0
+     return $ unpackString $ textVec ! 0
 
 unpackString (String s) = s
