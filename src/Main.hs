@@ -27,6 +27,8 @@ data GUI = GUI {
   input :: Entry,
   translated :: Label}
 
+yandexApiKey = "trnsl.1.1.20141206T232937Z.afa78ec902bc2385.64360501ae9af320dd9d69ccb190b091299abc2f"
+
 -- | Start GUI.
 main :: IO ()
 main =
@@ -34,7 +36,7 @@ main =
        -- Load the GUI from the Glade file
        gladePath <- getDataFileName "gui/rtit.glade"
        gui <- loadGlade gladePath
-       bindGuiEvents gui
+       bindGuiEvents gui (YandexClient yandexApiKey)
        mainGUI
 
 -- | Path to the Tesseract config
@@ -49,6 +51,7 @@ lang = "eng"
 
 -- | Load XML from glade path.
 -- Note: crashes with a runtime error in console if fails!
+loadGlade :: FilePath -> IO GUI
 loadGlade gladePath =
     do Just xml <- xmlNew gladePath
        gwin <- xmlGetWidget xml castToWindow "translatorWin"
@@ -57,27 +60,33 @@ loadGlade gladePath =
        gtranslated <- xmlGetWidget xml castToLabel "translatedText"
        return $ GUI gwin gsource ginput gtranslated
 
-bindGuiEvents gui =
+bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
+bindGuiEvents gui translator =
     do onDestroy (win gui) mainQuit
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
        timeoutAdd (captureScreenshot gui) 25
-       timeoutAdd (translateText gui) 3000
+       timeoutAdd (translateText gui translator) 3000
 
 -- | Helper for taking screenshot in every time interval.
+captureScreenshot :: GUI -> IO Bool
 captureScreenshot gui =
     do setSourceImage gui
        return True
 
 -- | Take screenshot and set it in the image GUI widget.
+setSourceImage :: GUI -> IO ()
 setSourceImage gui = screenShot gui >>= imageSetFromPixbuf (source gui) 
 
 -- | Ensure value is between given limits (mn and mx)
+ensureLimits :: Ord a => a -> a -> a -> a
 ensureLimits x mn mx = min mx (max x mn)
 
 -- | Compute correct size from origin, given size and maximum size.
+computeSize :: (Num a, Ord a) => a -> a -> a -> a
 computeSize o s m = if o + s <= m then s else m - o
 
+overlap :: (Num a, Ord a) => a -> a -> a -> a -> Bool
 overlap x xw o ow = or [and [(x <= o), (x + xw >= o)], and [(x <= o + ow), (x + xw >= o + ow)]]
 
 -- | Take a screenshot of a portion of a screen around the mouse pointer.
@@ -113,10 +122,10 @@ screenShot gui =
          else return pxbuf
 
 -- | Take OCR'd text from GUI and translate it by using translation web service.
-translateText :: GUI -> IO Bool
-translateText gui =
+translateText :: Translator a => GUI -> a -> IO Bool
+translateText gui translator =
     do t <- ocrGuiImage (source gui)
-       transText <- translate yandexApiKey "en" "de" (T.unpack t)
+       transText <- translate translator "en" "de" (T.unpack t)
        set (translated gui) [ labelText := "_" ++ (show transText) ++ "_" ]
        return True
 
@@ -152,6 +161,7 @@ ocrStoredImage imgPath =
     do imgBS <- readFile imgPath
        ocrImage imgBS tesseractCfgPath lang >>= return
 
+-- TODO(ikr): Use this instead of writing file to disk
 --ocrPixBuf :: Pixbuf -> IO Text
 --ocrPixBuf pixbuf =
 --    do img <- pixBufToByteString pixbuf
