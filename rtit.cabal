@@ -20,18 +20,18 @@ executable rtit
   main-is:             Main.hs
   -- other-modules:       
   build-depends:
-    base ==4.6.*,
-    gtk ==0.12.4,
-    glade,
-    mtl,
-    bytestring,
+    aeson,
     array,
-    text,
-    wreq,
+    base ==4.6.*,
+    bytestring,
+    glade,
+    gtk ==0.12.4,
+    htesseract-ocr,
+    HTTP,
     lens,
     lens-aeson,
+    mtl,
+    text,
     vector,
-    aeson,
-    text-format-simple,
-    htesseract-ocr
+    wreq
   hs-source-dirs:      src

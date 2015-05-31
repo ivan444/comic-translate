@@ -7,8 +7,8 @@ import Data.Aeson
 import Data.Aeson.Lens (_Array, key)
 import Data.Text
 import Data.Vector ((!))
+import Network.HTTP.Base (urlEncodeVars)
 import Network.Wreq as W
-import Text.Format (format)
 
 type SourceLanguage = String
 type DestinationLanguage = String
@@ -26,7 +26,8 @@ instance Translator YandexClient where
 
 -- | Translate text from the source language to the destination language using Yandex web service. 
 yandexTranslate apiKey sourceLang destLang text =
-  do r <- W.get $ format "https://translate.yandex.net/api/v1.5/tr.json/translate?key={0}&lang={1}-{2}&text={3}" [apiKey, sourceLang, destLang, text]
+  do let translateParams = urlEncodeVars [("key", apiKey), ("lang", sourceLang ++ "-" ++ destLang), ("text", text)]
+     r <- W.get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++ translateParams
      let textVec = r ^. responseBody . key "text" . _Array
      return $ unpackString $ textVec ! 0
 
