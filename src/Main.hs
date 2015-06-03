@@ -34,7 +34,7 @@ data GUI = GUI {
   win :: Window,
   source :: Image,
   input :: Entry,
-  translated :: Label}
+  translated :: Entry}
 
 yandexApiKey = "trnsl.1.1.20141206T232937Z.afa78ec902bc2385.64360501ae9af320dd9d69ccb190b091299abc2f"
 
@@ -57,7 +57,7 @@ loadGlade gladePath =
        gwin <- xmlGetWidget xml castToWindow "translatorWin"
        gsource <- xmlGetWidget xml castToImage "sourceImg"
        ginput <- xmlGetWidget xml castToEntry "extractedText"
-       gtranslated <- xmlGetWidget xml castToLabel "translatedText"
+       gtranslated <- xmlGetWidget xml castToEntry "translatedText"
        return $ GUI gwin gsource ginput gtranslated
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
@@ -66,7 +66,7 @@ bindGuiEvents gui translator =
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
        timeoutAdd (captureScreenshot gui) 25
-       timeoutAdd (translateText gui translator) 3000
+       timeoutAdd (translateText gui translator) 1000
 
 -- | Helper for taking screenshot in every time interval.
 captureScreenshot :: GUI -> IO Bool
@@ -125,8 +125,9 @@ screenShot gui =
 translateText :: Translator a => GUI -> a -> IO Bool
 translateText gui translator =
     do t <- ocrGuiImage (source gui)
-       transText <- translate translator "en" "de" (T.unpack t)
-       set (translated gui) [ labelText := "_" ++ (show transText) ++ "_" ]
+       set (input gui) [ entryText := T.unpack t ]
+       transText <- translate translator "en" "de" $ T.unpack t
+       set (translated gui) [ entryText := T.unpack transText ]
        return True
 
 imageToPixbuf :: Image -> IO (Maybe Pixbuf)
@@ -149,13 +150,12 @@ ocrGuiImage img =
    do imgPxbf <- imageToPixbuf img
       case imgPxbf of
         Just px ->
-          -- TODO(ikr): Don't write stuff to disk, make everything in-memory.
+          -- TODO(ikr): Don't write stuff to disk, do everything in-memory.
           do pixbufSave px "4590temporary39403image39405path39403.png" "png" []
              ocrStoredImage "4590temporary39403image39405path39403.png"
         Nothing -> return $ T.pack "-"
 
 -- | OCR image which is stored on the disk.
--- TODO(ikr): Make it accept Pixbuf directly. Skip the disk.
 ocrStoredImage :: String -> IO Text
 ocrStoredImage imgPath =
     do imgBS <- readFile imgPath

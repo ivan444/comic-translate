@@ -3,6 +3,9 @@
     FlexibleInstances #-}
 -- QSem was deprecated in 7.6, but no more
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
+
+module DataSource where
+
 module FB.DataSource
   ( FacebookReq(..)
   , initGlobalState
@@ -62,7 +65,6 @@ initGlobalState
   :: Int
   -> String
   -> IO (State TranslationReq)
-
 initGlobalState threads token = do
   manager <- newManager tlsManagerSettings
   return TranslationState
@@ -77,7 +79,6 @@ translationFetch
   -> u
   -> [BlockedFetch TranslationReq]
   -> PerformFetch
-
 translationFetch TranslationState{..} _flags _user bfs =
   AsyncFetch $ \inner -> do
     sem <- newQSem numThreads

@@ -7,8 +7,8 @@
     <property name="app_paintable">True</property>
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
-    <property name="default_width">440</property>
-    <property name="default_height">250</property>
+    <property name="default_width">70</property>
+    <property name="default_height">130</property>
     <child>
       <widget class="GtkVBox" id="translatorLayout">
         <property name="visible">True</property>
@@ -44,10 +44,14 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkLabel" id="translatedText">
-            <property name="height_request">55</property>
+          <widget class="GtkEntry" id="translatedText">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
+            <property name="invisible_char">•</property>
+            <property name="primary_icon_activatable">False</property>
+            <property name="secondary_icon_activatable">False</property>
+            <property name="primary_icon_sensitive">True</property>
+            <property name="secondary_icon_sensitive">True</property>
           </widget>
           <packing>
             <property name="expand">False</property>
@@ -56,10 +60,9 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkLabel" id="shortcutLabel">
+          <widget class="GtkLabel" id="originalText">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Press Ctrl + Alt + s to take a screenshot.</property>
           </widget>
           <packing>
             <property name="expand">False</property>
