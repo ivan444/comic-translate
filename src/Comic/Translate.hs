@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TranslateAPI where
+module Comic.Translate where
 
 import Control.Exception as E
 import Control.Lens

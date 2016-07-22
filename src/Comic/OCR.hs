@@ -1,4 +1,4 @@
-module Ocr where
+module Comic.OCR where
 
 import Data.ByteString hiding (pack)
 import Data.Text

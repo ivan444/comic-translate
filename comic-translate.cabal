@@ -1,0 +1,58 @@
+name:                comic-translate
+version:             0.1.0.0
+synopsis:            Real-time image text translation tool.
+description:         Please see README.md
+homepage:            https://github.com/ivan444/comic-translate#readme
+license:             MIT
+license-file:        LICENSE
+author:              Ivan Krišto
+maintainer:          ivan.kristo@gmail.com
+copyright:           2016 Ivan Krišto
+category:            Comics
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+data-files:          gui/comic-translate.glade
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Comic.OCR
+                     , Comic.Translate
+  build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , array
+                     , bytestring
+                     , glade
+                     , gtk
+                     , hflags
+                     , htesseract-ocr
+                     , HTTP
+                     , http-client
+                     , lens
+                     , lens-aeson
+                     , mtl
+                     , text
+                     , vector
+                     , wreq
+  default-language:    Haskell2010
+
+executable comic-translate-exe
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , comic-translate
+  default-language:    Haskell2010
+
+test-suite comic-translate-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , comic-translate
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/ivan444/comic-translate

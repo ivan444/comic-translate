@@ -20,10 +20,10 @@ import Graphics.UI.Gtk.Glade
 
 import HFlags
 
-import Ocr
-import TranslateAPI
+import Comic.OCR
+import Comic.Translate
 
-import Paths_rtit(getDataFileName)
+import Paths_comic-translate(getDataFileName)
 
 defineFlag "lang" "eng" "Language of a text we want to OCR"
 
