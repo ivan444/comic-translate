@@ -21,6 +21,8 @@ import Graphics.UI.Gtk.Gdk.Pixbuf
 import Graphics.UI.Gtk.Gdk.Screen
 import Graphics.UI.Gtk.Builder
 import qualified System.Glib.UTFString as Glib
+import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetWidth, drawWindowGetHeight)
+import Graphics.UI.Gtk.Abstract.Widget (widgetSizeRequest)
 
 import HFlags
 
@@ -105,13 +107,14 @@ screenShot gui =
     do -- Get screen size.
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
-       (mw, mh) <- drawableGetSize window
+       mw <- drawWindowGetWidth window
+       mh <- drawWindowGetHeight window
 
        -- Get current pointer position.
        (_, x, y, _) <- drawWindowGetPointerPos window
        -- Handle overlap of source rectangle and draw window.
        -- Get widget dimensions.
-       ws@(ww, wh) <- widgetGetSize (source gui)
+       ws@(ww, wh) <- widgetSizeRequest (source gui)
        -- Get widget origin (coordinates of upper left corner).
        (wx, wy) <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
        -- Compute screenshot origin and size so that
