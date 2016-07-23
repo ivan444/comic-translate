@@ -23,7 +23,8 @@ import Graphics.UI.Gtk.Windows.OffscreenWindow
 import Graphics.UI.Gtk.Builder
 import qualified System.Glib.UTFString as Glib
 import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetWidth, drawWindowGetHeight)
-import Graphics.UI.Gtk.Abstract.Widget (widgetSizeRequest)
+import Graphics.UI.Gtk.Abstract.Widget (widgetSizeRequest, widgetTranslateCoordinates)
+import Data.Maybe (fromMaybe)
 
 import HFlags
 
@@ -63,15 +64,15 @@ main =
        mainGUI
 
 buildGUI :: Builder -> IO GUI
-buildGUI builder =
-  do win        <- return $ getWidget castToWindow "translatorWin"
-     source     <- return $ getWidget castToImage "sourceImg"
-     input      <- return $ getWidget castToEntry "extractedText"
-     translated <- return $ getWidget castToEntry "translatedText"
-     return $ GUI{..}
+buildGUI builder = return GUI {
+      win        = getWidget castToWindow "translatorWin"
+    , source     = getWidget castToImage "sourceImg"
+    , input      = getWidget castToEntry "extractedText"
+    , translated = getWidget castToEntry "translatedText"
+}
   where
-    getWidget :: (GObjectClass o) => (obj -> Window) String
-    getWidget cast name = builderGetObject builder cast name
+    getWidget :: (GObjectClass o) => (obj -> Window) -> String
+    getWidget = builderGetObject builder
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
@@ -114,21 +115,23 @@ screenShot gui =
        (_, x, y, _) <- drawWindowGetPointerPos window
        -- Handle overlap of source rectangle and draw window.
        -- Get widget dimensions.
-       ws@(ww, wh) <- widgetSizeRequest (source gui)
+       ws@(ww, wh) <- widgetGetSizeRequest (source gui)
        -- Get widget origin (coordinates of upper left corner).
-       let (wx, wy) = (1,0) -- <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
+       maybeOrigin <- widgetTranslateCoordinates (source gui) window 0 0
+       let (wx, wy) = fromMaybe (0, 0) maybeOrigin
+       --(wx, wy) <- drawWindowGetOrigin (source gui)
        -- Compute screenshot origin and size so that
        -- mouse pointer is in the middle.
        let origin@(ox, oy) = (ensureLimits (x - ww `div` 2) 0 mw,
                               ensureLimits (y - wh `div` 2) 0 mh)
            size = (computeSize ox ww mw, computeSize oy wh mh)
-       
+
+--        Just pxbuf <- pixbufGetFromDrawable window
+--            ((uncurry . uncurry Rectangle) origin size)
+       --pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
        offScreenWin <- offscreenWindowNew
        add offScreenWin ((source gui) win)
        pxbuf <- offscreenWindowGetPixbuf offScreenWin
-       --Just pxbuf <- pixbufGetFromDrawable window
-       --    ((uncurry . uncurry Rectangle) origin size)
-
        if and [overlap wx ww ox ww, overlap wy wh oy wh]
          then
            do imgPxbf <- imageToPixbuf (source gui)
