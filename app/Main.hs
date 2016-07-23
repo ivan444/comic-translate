@@ -28,9 +28,8 @@ import Comic.Translate
 
 import Paths_comictrans(getDataFileName)
 
-defineFlag "lang" "eng" "Language of a text we want to OCR"
-
-defineFlag "tesseractCfgPath" "/home/ikr/radni/tess" "Path to the Tesseract config"
+defineFlag "lang" ("eng" :: T.Text) "Language of a text we want to OCR"
+defineFlag "tesseractCfgPath" ("/home/ikr/radni/tess" :: T.Text) "Path to the Tesseract config"
 $(return []) -- workaround for https://github.com/nilcons/hflags/issues/8
 
 data GUI = GUI {
