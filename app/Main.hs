@@ -55,7 +55,8 @@ main =
        guiXmlFilePath <- getDataFileName "gui/comic-translate.xml"
        guiXml <- readFile guiXmlFilePath
        builderAddFromString builder $ T.decodeUtf8 guiXml
-       -- bindGuiEvents gui (YandexClient yandexApiKey)
+       gui <- buildGUI builder
+       bindGuiEvents gui (YandexClient yandexApiKey)
 
        window <- builderGetObject builder castToWindow ("translatorWin" :: String)
        on window deleteEvent $ liftIO (mainQuit >> return False)
@@ -83,7 +84,6 @@ buildGUI builder =
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
     do Just screen <- screenGetDefault
-       window <- screenGetRootWindow screen
        timeoutAdd (captureScreenshot gui) 25
        timeoutAdd (translateText gui translator) 1000
 
@@ -123,9 +123,11 @@ screenShot gui =
        -- Get widget dimensions.
        ws@(ww, wh) <- widgetGetSizeRequest (source gui)
        -- Get widget origin (coordinates of upper left corner).
-       maybeOrigin <- widgetTranslateCoordinates (source gui) window 0 0
-       let (wx, wy) = fromMaybe (0, 0) maybeOrigin
+       --maybeOrigin <- widgetTranslateCoordinates (win gui) window 0 0
+       --let (wx, wy) = fromMaybe (0, 0) maybeOrigin
        --(wx, wy) <- drawWindowGetOrigin (source gui)
+       (wx, wy) <- windowGetPosition (win gui)
+       _ <- putStrLn $ (show wx) ++ " " ++ (show wy)
        -- Compute screenshot origin and size so that
        -- mouse pointer is in the middle.
        let origin@(ox, oy) = (ensureLimits (x - ww `div` 2) 0 mw,
@@ -134,10 +136,11 @@ screenShot gui =
 
 --        Just pxbuf <- pixbufGetFromDrawable window
 --            ((uncurry . uncurry Rectangle) origin size)
-       pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
-       --offScreenWin <- offscreenWindowNew
-       --add offScreenWin ((source gui) win)
-       --pxbuf <- offscreenWindowGetPixbuf offScreenWin
+       --pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
+       offScreenWin <- castToOffscreenWindow (win gui)
+       --offScreenWin <- toOffscreenWindow (win gui)
+       --offscreenWindow offScreenWin
+       Just pxbuf <- offscreenWindowGetPixbuf offScreenWin
        if and [overlap wx ww ox ww, overlap wy wh oy wh]
          then
            do imgPxbf <- imageToPixbuf (source gui)
