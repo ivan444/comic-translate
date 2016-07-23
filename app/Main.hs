@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
@@ -58,14 +59,16 @@ main =
        widgetShowAll window
        mainGUI
 
-loadGlade :: FilePath -> IO GUI
-loadGlade gladePath =
-    do Just xml <- xmlNew gladePath
-       gwin <- xmlGetWidget xml castToWindow "translatorWin"
-       gsource <- xmlGetWidget xml castToImage "sourceImg"
-       ginput <- xmlGetWidget xml castToEntry "extractedText"
-       gtranslated <- xmlGetWidget xml castToEntry "translatedText"
-       return $ GUI gwin gsource ginput gtranslated
+buildGUI :: Builder -> IO GUI
+buildGUI builder =
+  do win        <- return $ getWidget castToWindow "translatorWin"
+     source     <- return $ getWidget castToImage "sourceImg"
+     input      <- return $ getWidget castToEntry "extractedText"
+     translated <- return $ getWidget castToEntry "translatedText"
+     return $ GUI{..}
+  where
+    getWidget :: (GObjectClass o) => (obj -> Window) String
+    getWidget cast name = builderGetObject builder cast name
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
