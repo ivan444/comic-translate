@@ -114,20 +114,15 @@ screenShot gui =
     do -- Get screen size.
        Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
-       mw <- drawWindowGetWidth window
-       mh <- drawWindowGetHeight window
+       (mw, mh) <- drawableGetSize window
 
        -- Get current pointer position.
        (_, x, y, _) <- drawWindowGetPointerPos window
        -- Handle overlap of source rectangle and draw window.
        -- Get widget dimensions.
-       ws@(ww, wh) <- widgetGetSizeRequest (source gui)
+       ws@(ww, wh) <- widgetGetSize (source gui)
        -- Get widget origin (coordinates of upper left corner).
-       --maybeOrigin <- widgetTranslateCoordinates (win gui) window 0 0
-       --let (wx, wy) = fromMaybe (0, 0) maybeOrigin
-       --(wx, wy) <- drawWindowGetOrigin (source gui)
-       (wx, wy) <- windowGetPosition (win gui)
-       _ <- putStrLn $ (show wx) ++ " " ++ (show wy)
+       (wx, wy) <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
        -- Compute screenshot origin and size so that
        -- mouse pointer is in the middle.
        let origin@(ox, oy) = (ensureLimits (x - ww `div` 2) 0 mw,
@@ -135,19 +130,15 @@ screenShot gui =
            size = (computeSize ox ww mw, computeSize oy wh mh)
 
        Just pxbuf <- pixbufGetFromDrawable window
-            ((uncurry . uncurry Rectangle) origin size)
-       --pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
-       --offScreenWin <- offscreenWindowNew
-       --offscreenWindow offScreenWin
-       --Just pxbuf <- offscreenWindowGetPixbuf offScreenWin
-       return pxbuf
-       --if and [overlap wx ww ox ww, overlap wy wh oy wh]
-       --  then
-       --    do imgPxbf <- imageToPixbuf (source gui)
-       --       case imgPxbf of
-       --         Just px -> return px
-       --         Nothing -> return pxbuf
-       --  else return pxbuf
+           ((uncurry . uncurry Rectangle) origin size)
+       
+       if and [overlap wx ww ox ww, overlap wy wh oy wh]
+         then
+           do imgPxbf <- imageToPixbuf (source gui)
+              case imgPxbf of
+                Just px -> return px
+                Nothing -> return pxbuf
+         else return pxbuf
 
 -- | Take OCR'd text from GUI and translate it by using translation web service.
 translateText :: Translator a => GUI -> a -> IO Bool
