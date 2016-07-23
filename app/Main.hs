@@ -19,6 +19,7 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.EventM
 import Graphics.UI.Gtk.Gdk.Pixbuf
 import Graphics.UI.Gtk.Gdk.Screen
+import Graphics.UI.Gtk.Windows.OffscreenWindow
 import Graphics.UI.Gtk.Builder
 import qualified System.Glib.UTFString as Glib
 import Graphics.UI.Gtk.Gdk.DrawWindow (drawWindowGetWidth, drawWindowGetHeight)
@@ -115,15 +116,18 @@ screenShot gui =
        -- Get widget dimensions.
        ws@(ww, wh) <- widgetSizeRequest (source gui)
        -- Get widget origin (coordinates of upper left corner).
-       (wx, wy) <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
+       let (wx, wy) = (1,0) -- <- widgetGetDrawWindow (source gui) >>= drawWindowGetOrigin
        -- Compute screenshot origin and size so that
        -- mouse pointer is in the middle.
        let origin@(ox, oy) = (ensureLimits (x - ww `div` 2) 0 mw,
                               ensureLimits (y - wh `div` 2) 0 mh)
            size = (computeSize ox ww mw, computeSize oy wh mh)
-
-       Just pxbuf <- pixbufGetFromDrawable window
-           ((uncurry . uncurry Rectangle) origin size)
+       
+       offScreenWin <- offscreenWindowNew
+       add offScreenWin ((source gui) win)
+       pxbuf <- offscreenWindowGetPixbuf offScreenWin
+       --Just pxbuf <- pixbufGetFromDrawable window
+       --    ((uncurry . uncurry Rectangle) origin size)
 
        if and [overlap wx ww ox ww, overlap wy wh oy wh]
          then
