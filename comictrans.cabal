@@ -22,7 +22,7 @@ library
                      , aeson
                      , array
                      , bytestring
-                     , gtk3
+                     , gtk
                      , mtl
                      , glib
                      , HTTP
@@ -45,7 +45,7 @@ executable comictrans-exe
                      , aeson
                      , array
                      , bytestring
-                     , gtk3
+                     , gtk
                      , glib
                      , mtl
                      , HTTP

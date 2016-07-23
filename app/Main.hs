@@ -134,20 +134,20 @@ screenShot gui =
                               ensureLimits (y - wh `div` 2) 0 mh)
            size = (computeSize ox ww mw, computeSize oy wh mh)
 
---        Just pxbuf <- pixbufGetFromDrawable window
---            ((uncurry . uncurry Rectangle) origin size)
+       Just pxbuf <- pixbufGetFromDrawable window
+            ((uncurry . uncurry Rectangle) origin size)
        --pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
-       offScreenWin <- castToOffscreenWindow (win gui)
-       --offScreenWin <- toOffscreenWindow (win gui)
+       --offScreenWin <- offscreenWindowNew
        --offscreenWindow offScreenWin
-       Just pxbuf <- offscreenWindowGetPixbuf offScreenWin
-       if and [overlap wx ww ox ww, overlap wy wh oy wh]
-         then
-           do imgPxbf <- imageToPixbuf (source gui)
-              case imgPxbf of
-                Just px -> return px
-                Nothing -> return pxbuf
-         else return pxbuf
+       --Just pxbuf <- offscreenWindowGetPixbuf offScreenWin
+       return pxbuf
+       --if and [overlap wx ww ox ww, overlap wy wh oy wh]
+       --  then
+       --    do imgPxbf <- imageToPixbuf (source gui)
+       --       case imgPxbf of
+       --         Just px -> return px
+       --         Nothing -> return pxbuf
+       --  else return pxbuf
 
 -- | Take OCR'd text from GUI and translate it by using translation web service.
 translateText :: Translator a => GUI -> a -> IO Bool
