@@ -64,15 +64,21 @@ main =
        mainGUI
 
 buildGUI :: Builder -> IO GUI
-buildGUI builder = return GUI {
-      win        = getWidget castToWindow "translatorWin"
-    , source     = getWidget castToImage "sourceImg"
-    , input      = getWidget castToEntry "extractedText"
-    , translated = getWidget castToEntry "translatedText"
-}
+buildGUI builder = 
+  do win        <- getWidget castToWindow "translatorWin"
+     source     <- getWidget castToImage "sourceImg"
+     input      <- getWidget castToEntry "extractedText"
+     translated <- getWidget castToEntry "translatedText"
+     return $ GUI {
+         win = win
+       , source = source
+       , input = input
+       , translated = translated
+     }
+
   where
-    getWidget :: (GObjectClass o) => (obj -> Window) -> String
-    getWidget = builderGetObject builder
+    getWidget :: GObjectClass cls => (GObject -> cls) -> String -> IO cls
+    getWidget cast name = builderGetObject builder cast name
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
@@ -128,10 +134,10 @@ screenShot gui =
 
 --        Just pxbuf <- pixbufGetFromDrawable window
 --            ((uncurry . uncurry Rectangle) origin size)
-       --pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
-       offScreenWin <- offscreenWindowNew
-       add offScreenWin ((source gui) win)
-       pxbuf <- offscreenWindowGetPixbuf offScreenWin
+       pxbuf <- pixbufNew ColorspaceRgb True  0 255 0
+       --offScreenWin <- offscreenWindowNew
+       --add offScreenWin ((source gui) win)
+       --pxbuf <- offscreenWindowGetPixbuf offScreenWin
        if and [overlap wx ww ox ww, overlap wy wh oy wh]
          then
            do imgPxbf <- imageToPixbuf (source gui)
@@ -165,19 +171,19 @@ pixBufToByteString pixbuf =
        return arr
 
 ocrGuiImage :: Image -> IO Text
-ocrGuiImage img =
-   do imgPxbf <- imageToPixbuf img
-      case imgPxbf of
-        Just px ->
-          -- TODO(ikr): Don't write stuff to disk, do everything in-memory.
-          do pixbufSave px "4590temporary39403image39405path39403.png" "png" []
-             ocrStoredImage "4590temporary39403image39405path39403.png"
-        Nothing -> return $ T.pack "-"
+ocrGuiImage img = return "-"
+   --do imgPxbf <- imageToPixbuf img
+   --   case imgPxbf of
+   --     Just px ->
+   --       -- TODO(ikr): Don't write stuff to disk, do everything in-memory.
+   --       do pixbufSave px ("4590temporary39403image39405path39403.png" :: T.Text) ("png" :: T.Text) []
+   --          ocrStoredImage ("4590temporary39403image39405path39403.png" :: T.Text)
+   --     Nothing -> return $ T.pack "-"
 
 -- | OCR image which is stored on the disk.
-ocrStoredImage :: String -> IO Text
+ocrStoredImage :: Text -> IO Text
 ocrStoredImage imgPath =
-    do imgBS <- readFile imgPath
+    do imgBS <- readFile $ T.unpack imgPath
        ocrImage imgBS flags_tesseractCfgPath flags_lang >>= return
 
 -- TODO(ikr): Use this instead of writing file to disk
