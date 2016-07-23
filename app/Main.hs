@@ -23,7 +23,7 @@ import HFlags
 import Comic.OCR
 import Comic.Translate
 
-import Paths_comic_translate(getDataFileName)
+import Paths_comictrans(getDataFileName)
 
 defineFlag "lang" "eng" "Language of a text we want to OCR"
 
