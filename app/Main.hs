@@ -16,14 +16,14 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.EventM
 import Graphics.UI.Gtk.Gdk.Pixbuf
 import Graphics.UI.Gtk.Gdk.Screen
-import Graphics.UI.Gtk.Glade
+--import Graphics.UI.Gtk.Glade
 
 import HFlags
 
 import Comic.OCR
 import Comic.Translate
 
-import Paths_comic-translate(getDataFileName)
+import Paths_comic_translate(getDataFileName)
 
 defineFlag "lang" "eng" "Language of a text we want to OCR"
 

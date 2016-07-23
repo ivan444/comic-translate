@@ -1,4 +1,4 @@
-name:                comic-translate
+name:                comic_translate
 version:             0.1.0.0
 synopsis:            Real-time image text translation tool.
 description:         Please see README.md
@@ -18,14 +18,13 @@ library
   hs-source-dirs:      src
   exposed-modules:     Comic.OCR
                      , Comic.Translate
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.5 && < 5
                      , aeson
                      , array
                      , bytestring
-                     , glade
-                     , gtk
+                     , gtk3
+                     , mtl
                      , hflags
-                     , htesseract-ocr
                      , HTTP
                      , http-client
                      , lens
@@ -36,20 +35,20 @@ library
                      , wreq
   default-language:    Haskell2010
 
-executable comic-translate-exe
+executable comic_translate-exe
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , comic-translate
+                     , comic_translate
   default-language:    Haskell2010
 
-test-suite comic-translate-test
+test-suite comic_translate-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , comic-translate
+                     , comic_translate
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
