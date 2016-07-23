@@ -74,8 +74,7 @@ buildGUI builder =
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
-    do onDestroy (win gui) mainQuit
-       Just screen <- screenGetDefault
+    do Just screen <- screenGetDefault
        window <- screenGetRootWindow screen
        timeoutAdd (captureScreenshot gui) 25
        timeoutAdd (translateText gui translator) 1000
