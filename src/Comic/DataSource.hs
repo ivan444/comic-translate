@@ -29,19 +29,19 @@ import Control.Exception
 
 import Haxl.Core
 
-data TransaltionParameters = TransaltionParameters String String String
+data TranslationParameters = TranslationParameters String String String
 data TranslationReq a where
-   GetTranslation :: TransaltionParameters -> TranslationReq String
+   GetTranslation :: TranslationParameters -> TranslationReq String
   deriving Typeable
 
-deriving instance Eq (TransaltionParameters)
+deriving instance Eq (TranslationParameters)
 deriving instance Eq (TranslationReq a)
-deriving instance Show (TransaltionParameters)
+deriving instance Show (TranslationParameters)
 deriving instance Show (TranslationReq a)
 instance Show1 TranslationReq where show1 = show
 
-instance Hashable TransaltionParameters where
-  hashWithSalt s (TransaltionParameters f t source) = hashWithSalt s (f, t ,source)
+instance Hashable TranslationParameters where
+  hashWithSalt s (TranslationParameters f t source) = hashWithSalt s (f, t ,source)
 
 instance Hashable (TranslationReq a) where
   hashWithSalt s (GetTranslation p) = hashWithSalt s (0::Int,p)
