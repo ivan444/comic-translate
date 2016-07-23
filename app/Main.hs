@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -10,13 +11,15 @@ import Data.Array.MArray
 import Data.ByteString hiding (putStrLn, unpack)
 import Data.ByteString.Unsafe
 import Data.Text as T
+import Data.Text.Encoding as T
 import Data.Word
 import Foreign.Marshal.Alloc
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.EventM
 import Graphics.UI.Gtk.Gdk.Pixbuf
 import Graphics.UI.Gtk.Gdk.Screen
---import Graphics.UI.Gtk.Glade
+import Graphics.UI.Gtk.Builder
+import qualified System.Glib.UTFString as Glib
 
 import HFlags
 
@@ -43,14 +46,19 @@ main :: IO ()
 main =
     do $initHFlags "Desktop app for realtime translation of web comics"
        initGUI
-       -- Load the GUI from the Glade file
-       gladePath <- getDataFileName "gui/rtit.glade"
-       gui <- loadGlade gladePath
-       bindGuiEvents gui (YandexClient yandexApiKey)
+       -- Load the GUI from the XML file
+       builder <- builderNew
+       guiXmlFilePath <- getDataFileName "gui/comic-translate.xml"
+       guiXml <- readFile guiXmlFilePath
+       builderAddFromString builder $ T.decodeUtf8 guiXml
+       -- bindGuiEvents gui (YandexClient yandexApiKey)
+
+       window <- builderGetObject builder castToWindow ("translatorWin" :: String)
+       on window deleteEvent $ liftIO (mainQuit >> return False)
+
+       widgetShowAll window
        mainGUI
 
--- | Load XML from glade path.
--- Note: crashes with a runtime error in console if fails!
 loadGlade :: FilePath -> IO GUI
 loadGlade gladePath =
     do Just xml <- xmlNew gladePath

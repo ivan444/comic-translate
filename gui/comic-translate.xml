@@ -1,8 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<glade-interface>
-  <!-- interface-requires gtk+ 2.24 -->
-  <!-- interface-naming-policy project-wide -->
-  <widget class="GtkWindow" id="translatorWin">
+<?xml version="1.0"?>
+<interface>
+  <object class="GtkWindow" id="translatorWin">
     <property name="visible">True</property>
     <property name="app_paintable">True</property>
     <property name="can_focus">False</property>
@@ -10,17 +8,17 @@
     <property name="default_width">70</property>
     <property name="default_height">130</property>
     <child>
-      <widget class="GtkVBox" id="translatorLayout">
+      <object class="GtkVBox" id="translatorLayout">
         <property name="visible">True</property>
         <property name="app_paintable">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
         <child>
-          <widget class="GtkImage" id="sourceImg">
+          <object class="GtkImage" id="sourceImg">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="stock">gtk-missing-image</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
@@ -28,15 +26,15 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkEntry" id="extractedText">
+          <object class="GtkEntry" id="extractedText">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="invisible_char">•</property>
+            <property name="invisible_char">&#x2022;</property>
             <property name="primary_icon_activatable">False</property>
             <property name="secondary_icon_activatable">False</property>
             <property name="primary_icon_sensitive">True</property>
             <property name="secondary_icon_sensitive">True</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
@@ -44,15 +42,15 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkEntry" id="translatedText">
+          <object class="GtkEntry" id="translatedText">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="invisible_char">•</property>
+            <property name="invisible_char">&#x2022;</property>
             <property name="primary_icon_activatable">False</property>
             <property name="secondary_icon_activatable">False</property>
             <property name="primary_icon_sensitive">True</property>
             <property name="secondary_icon_sensitive">True</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
@@ -60,17 +58,17 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkLabel" id="originalText">
+          <object class="GtkLabel" id="originalText">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">3</property>
           </packing>
         </child>
-      </widget>
+      </object>
     </child>
-  </widget>
-</glade-interface>
+  </object>
+</interface>

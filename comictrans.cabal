@@ -12,7 +12,7 @@ category:            Comics
 build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
-data-files:          gui/comic-translate.glade
+data-files:          gui/comic-translate.xml
 
 library
   hs-source-dirs:      src
@@ -24,6 +24,7 @@ library
                      , bytestring
                      , gtk3
                      , mtl
+                     , glib
                      , HTTP
                      , hflags
                      , http-client
@@ -45,6 +46,7 @@ executable comictrans-exe
                      , array
                      , bytestring
                      , gtk3
+                     , glib
                      , mtl
                      , HTTP
                      , hflags
