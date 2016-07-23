@@ -70,7 +70,7 @@ buildGUI builder =
      source     <- getWidget castToImage "sourceImg"
      input      <- getWidget castToEntry "extractedText"
      translated <- getWidget castToEntry "translatedText"
-     return $ GUI {
+     return GUI {
          win = win
        , source = source
        , input = input
@@ -79,7 +79,7 @@ buildGUI builder =
 
   where
     getWidget :: GObjectClass cls => (GObject -> cls) -> String -> IO cls
-    getWidget cast name = builderGetObject builder cast name
+    getWidget = builderGetObject builder
 
 bindGuiEvents :: Translator a => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator =
@@ -169,9 +169,8 @@ imageToPixbuf img =
 
 pixBufToByteString :: Pixbuf -> IO [Word8]
 pixBufToByteString pixbuf =
-    do pbd <- (pixbufGetPixels pixbuf :: IO (PixbufData Int Word8))
-       arr <- getElems pbd
-       return arr
+    do pbd <- pixbufGetPixels pixbuf :: IO (PixbufData Int Word8)
+       getElems pbd
 
 ocrGuiImage :: Image -> IO Text
 ocrGuiImage img = return "-"
