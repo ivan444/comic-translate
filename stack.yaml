@@ -1,6 +1,7 @@
-resolver: lts-6.8
-packages:
-- '.'
-extra-deps: []
 flags: {}
 extra-package-dbs: []
+packages:
+- '.'
+extra-deps:
+- HSH-2.1.2
+resolver: lts-6.8

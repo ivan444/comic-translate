@@ -25,6 +25,7 @@ library
                      , gtk
                      , mtl
                      , glib
+                     , HSH
                      , HTTP
                      , hflags
                      , http-client
@@ -48,6 +49,7 @@ executable comictrans-exe
                      , gtk
                      , glib
                      , mtl
+                     , HSH
                      , HTTP
                      , hflags
                      , http-client
