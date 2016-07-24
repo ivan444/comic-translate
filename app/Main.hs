@@ -10,6 +10,7 @@ import System.Environment
 
 import Data.Array.MArray
 import Data.ByteString hiding (putStrLn, unpack)
+import qualified Data.ByteString as B
 import Data.ByteString.Unsafe
 import Data.Text as T
 import Data.Text.Encoding as T
@@ -158,30 +159,18 @@ imageToPixbuf img =
               return $ Just pxbf
          else return Nothing
 
-pixBufToByteString :: Pixbuf -> IO [Word8]
+pixBufToByteString :: Pixbuf -> IO ByteString
 pixBufToByteString pixbuf =
     do pbd <- pixbufGetPixels pixbuf :: IO (PixbufData Int Word8)
-       getElems pbd
+       wds <- getElems pbd
+       return $ B.pack wds
 
 ocrGuiImage :: Image -> IO Text
-ocrGuiImage img = return "-"
-   --do imgPxbf <- imageToPixbuf img
-   --   case imgPxbf of
-   --     Just px ->
-   --       -- TODO(ikr): Don't write stuff to disk, do everything in-memory.
-   --       do pixbufSave px ("4590temporary39403image39405path39403.png" :: T.Text) ("png" :: T.Text) []
-   --          ocrStoredImage ("4590temporary39403image39405path39403.png" :: T.Text)
-   --     Nothing -> return $ T.pack "-"
-
--- | OCR image which is stored on the disk.
-ocrStoredImage :: Text -> IO Text
-ocrStoredImage imgPath =
-    do imgBS <- readFile $ T.unpack imgPath
-       ocrImage imgBS flags_tesseractCfgPath flags_lang >>= return
-
--- TODO(ikr): Use this instead of writing file to disk
---ocrPixBuf :: Pixbuf -> IO Text
---ocrPixBuf pixbuf =
---    do img <- pixBufToByteString pixbuf
---       text <- ocrImage $ pack img
---       return text
+ocrGuiImage img =
+   do imgPxbf <- imageToPixbuf img
+      case imgPxbf of
+        Just px ->
+          do imgContent <- pixBufToByteString px
+             B.writeFile "/tmp/img" imgContent
+             ocrImage imgContent "/home/ikr/radni/" "eng"
+        Nothing -> return $ T.pack "-"

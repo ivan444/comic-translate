@@ -18,7 +18,7 @@ buildTesseractArgs tessdataPath lang =
   [ "stdin"
   , "stdout"
   , "-l " ++ lang
-  ,"--tessdata-dir='" ++ tessdataPath ++ "'"
+  ,"--tessdata-dir '" ++ tessdataPath ++ "'"
   , "-psm 1"
   ]
 
