@@ -51,6 +51,9 @@ executable comictrans-exe
                      , mtl
                      , HSH
                      , HTTP
+                     , JuicyPixels
+                     , containers
+                     , vector
                      , hflags
                      , http-client
                      , lens
