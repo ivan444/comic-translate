@@ -1,3 +1,3 @@
 ## Required external dependencies
-libgtk-3-dev
+libgtk2.0-dev
 

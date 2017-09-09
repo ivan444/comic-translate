@@ -13,26 +13,39 @@ import Network.Wreq (get, responseBody)
 import Network.HTTP.Client (HttpException)
 
 type SourceLanguage = String
+
 type DestinationLanguage = String
+
 type OriginalText = String
 
-class Translator a where
+class Translator a  where
     -- | Translate text from the source language to the destination language.
-    translate :: a -> SourceLanguage -> DestinationLanguage -> OriginalText -> IO Text
+    translate
+        :: a -> SourceLanguage -> DestinationLanguage -> OriginalText -> IO Text
 
-data YandexClient = YandexClient { apiKey :: String }  
+data YandexClient = YandexClient
+    { apiKey :: String
+    } 
 
 instance Translator YandexClient where
-  translate translator = yandexTranslate apiKey
-      where (YandexClient apiKey) = translator
+    translate translator = yandexTranslate apiKey
+      where
+        (YandexClient apiKey) = translator
 
 -- | Translate text from the source language to the destination language using Yandex web service. 
-yandexTranslate apiKey sourceLang destLang text =
-  (do let translateParams = urlEncodeVars [("key", apiKey), ("lang", sourceLang ++ "-" ++ destLang), ("text", text)]
-      r <- get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++ translateParams
-      let textVec = r ^. responseBody . key "text" . _Array
-      return $ unpackString $ textVec ! 0
-  ) `E.catch` handler
-  where unpackString (String s) = s
-        handler :: HttpException -> IO Text
-        handler _ = return ""
+yandexTranslate apiKey sourceLang destLang text = 
+    (do let translateParams = 
+                urlEncodeVars
+                    [ ("key", apiKey)
+                    , ("lang", sourceLang ++ "-" ++ destLang)
+                    , ("text", text)]
+        r <- 
+            get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++
+            translateParams
+        let textVec = r ^. responseBody . key "text" . _Array
+        return $ unpackString $ textVec ! 0) `E.catch`
+    handler
+  where
+    unpackString (String s) = s
+    handler :: HttpException -> IO Text
+    handler _ = return ""
