@@ -53,8 +53,6 @@ $(return []) -- workaround for https://github.com/nilcons/hflags/issues/8
 data GUI = GUI
     { win :: Window
     , source :: Image
-    , input :: Entry
-    , translated :: Entry
     } 
 
 yandexApiKey = 
@@ -82,14 +80,10 @@ buildGUI :: Builder -> IO GUI
 buildGUI builder = do
     win <- getWidget castToWindow "translatorWin"
     source <- getWidget castToImage "sourceImg"
-    input <- getWidget castToEntry "extractedText"
-    translated <- getWidget castToEntry "translatedText"
     return
         GUI
         { win = win
         , source = source
-        , input = input
-        , translated = translated
         }
   where
     getWidget
