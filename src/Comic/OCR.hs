@@ -14,7 +14,7 @@ tesseractCmd :: String
 tesseractCmd = "tesseract"
 
 buildTesseractArgs :: String -> String -> [String]
-buildTesseractArgs tessdataPath lang = 
+buildTesseractArgs tessdataPath lang =
     [ "stdin"
     , "stdout"
     , "-l " ++ lang

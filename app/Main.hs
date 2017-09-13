@@ -4,6 +4,7 @@
 
 module Main where
 
+import Control.Concurrent (forkIO)
 import Control.Monad.Trans (liftIO)
 import Prelude hiding (readFile)
 import System.Environment
@@ -13,6 +14,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Unsafe
 import Data.Text as T
+import Data.Text.IO as T
 import Data.Text.Encoding as T
 import Data.Word
 import Foreign.Marshal.Alloc
@@ -37,6 +39,7 @@ import HFlags
 import Comic.OCR
 import Comic.Translate
 import Paths_comictrans (getDataFileName)
+import qualified System.Console.ANSI as ColTerm
 
 defineFlag "lang" ("eng" :: T.Text) "Language of a text we want to OCR"
 
@@ -66,7 +69,7 @@ main = do
     -- Load the GUI from the XML file
     builder <- builderNew
     guiXmlFilePath <- getDataFileName "gui/comic-translate.xml"
-    guiXml <- readFile guiXmlFilePath
+    guiXml <- B.readFile guiXmlFilePath
     builderAddFromString builder $ T.decodeUtf8 guiXml
     gui <- buildGUI builder
     bindGuiEvents gui (YandexClient yandexApiKey)
@@ -173,10 +176,20 @@ translateText
     :: Translator a
     => GUI -> a -> IO Bool
 translateText gui translator = do
-    t <- ocrGuiImage (source gui)
-    set (input gui) [entryText := T.unpack t]
-    transText <- translate translator "en" "de" $ T.unpack t
-    set (translated gui) [entryText := T.unpack transText]
+    let img = (source gui)
+    forkIO $
+        do t <- ocrGuiImage img
+           transText <- translate translator "en" "de" $ T.unpack t
+           ColTerm.setSGR
+               [ ColTerm.SetColor
+                     ColTerm.Foreground
+                     ColTerm.Dull
+                     ColTerm.Magenta]
+           T.putStrLn t
+           ColTerm.setSGR
+               [ColTerm.SetColor ColTerm.Foreground ColTerm.Vivid ColTerm.Red]
+           T.putStrLn transText
+           ColTerm.setSGR [ColTerm.Reset]
     return True
 
 imageToPixbuf :: Image -> IO (Maybe Pixbuf)
