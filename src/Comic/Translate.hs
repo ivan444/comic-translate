@@ -6,22 +6,26 @@ import Control.Exception as E
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Lens (_Array, key)
-import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Vector ((!))
 import Network.HTTP.Base (urlEncodeVars)
 import Network.Wreq (get, responseBody)
 import Network.HTTP.Client (HttpException)
 
-type SourceLanguage = String
+type SourceLanguage = T.Text
 
-type DestinationLanguage = String
+type DestinationLanguage = T.Text
 
-type OriginalText = String
+type OriginalText = T.Text
 
 class Translator a  where
     -- | Translate text from the source language to the destination language.
     translate
-        :: a -> SourceLanguage -> DestinationLanguage -> OriginalText -> IO Text
+        :: a
+        -> SourceLanguage
+        -> DestinationLanguage
+        -> OriginalText
+        -> IO T.Text
 
 data YandexClient = YandexClient
     { apiKey :: String
@@ -37,8 +41,9 @@ yandexTranslate apiKey sourceLang destLang text =
     (do let translateParams = 
                 urlEncodeVars
                     [ ("key", apiKey)
-                    , ("lang", sourceLang ++ "-" ++ destLang)
-                    , ("text", text)]
+                    , ( "lang"
+                      , (T.unpack sourceLang) ++ "-" ++ (T.unpack destLang))
+                    , ("text", T.unpack text)]
         r <- 
             get $ "https://translate.yandex.net/api/v1.5/tr.json/translate?" ++
             translateParams
@@ -47,5 +52,5 @@ yandexTranslate apiKey sourceLang destLang text =
     handler
   where
     unpackString (String s) = s
-    handler :: HttpException -> IO Text
+    handler :: HttpException -> IO T.Text
     handler _ = return ""

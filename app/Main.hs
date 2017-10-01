@@ -41,12 +41,22 @@ import Comic.Translate
 import Paths_comictrans (getDataFileName)
 import qualified System.Console.ANSI as ColTerm
 
-defineFlag "lang" ("eng" :: T.Text) "Language of a text we want to OCR"
+defineFlag "ocr_lang" ("eng" :: T.Text) "Language of a text we want to OCR."
 
 defineFlag
-    "tesseractCfgPath"
-    ("/home/ikr/radni/tess" :: T.Text)
-    "Path to the Tesseract config"
+    "translation_source_lang"
+    ("en" :: T.Text)
+    "Language to be translated."
+
+defineFlag
+    "translation_destination_lang"
+    ("de" :: T.Text)
+    "Language to which the test will be translated."
+
+defineFlag
+    "tesseract_data_dir"
+    ("/home/ikr/radni" :: T.Text)
+    "Path to the directory with Tesseract language data."
 
 $(return []) -- workaround for https://github.com/nilcons/hflags/issues/8
 
@@ -173,7 +183,12 @@ translateText gui translator = do
     let img = (source gui)
     forkIO $
         do t <- ocrGuiImage img
-           transText <- translate translator "en" "de" $ T.unpack t
+           transText <- 
+               translate
+                   translator
+                   flags_translation_source_lang
+                   flags_translation_destination_lang
+                   t
            ColTerm.setSGR
                [ ColTerm.SetColor
                      ColTerm.Foreground
@@ -252,6 +267,5 @@ ocrGuiImage img = do
     case imgPxbf of
         Just px -> do
             imgContent <- pixbufBytes px
-            B.writeFile "/tmp/img.png" imgContent
-            ocrImage imgContent "/home/ikr/radni/" "eng"
+            ocrImage imgContent flags_tesseract_data_dir flags_ocr_lang
         Nothing -> return $ T.pack "-"
