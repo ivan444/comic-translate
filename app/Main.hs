@@ -106,41 +106,13 @@ bindGuiEvents
     => GUI -> a -> IO HandlerId
 bindGuiEvents gui translator = do
     Just screen <- screenGetDefault
-    timeoutAdd (captureScreenshot gui) 25
+    timeoutAdd (setSourceImage gui >> return True) 25
     timeoutAdd (translateText gui translator) 1000
 
--- | Helper for taking screenshot in every time interval.
-captureScreenshot
-    :: GUI -> IO Bool
-captureScreenshot gui = do
-    setSourceImage gui
-    return True
-
--- | Take screenshot and set it in the image GUI widget.
+-- | Take a screenshot and set it in the image GUI widget.
 setSourceImage
     :: GUI -> IO ()
 setSourceImage gui = screenShot gui >>= imageSetFromPixbuf (source gui)
-
--- | Ensure value is between given limits (mn and mx)
-ensureLimits
-    :: Ord a
-    => a -> a -> a -> a
-ensureLimits x mn mx = min mx (max x mn)
-
--- | Compute correct size from origin, given size and maximum size.
-computeSize
-    :: (Num a, Ord a)
-    => a -> a -> a -> a
-computeSize o s m = 
-    if o + s <= m
-        then s
-        else m - o
-
-overlap
-    :: (Num a, Ord a)
-    => a -> a -> a -> a -> Bool
-overlap x xw o ow = 
-    or [and [(x <= o), (x + xw >= o)], and [(x <= o + ow), (x + xw >= o + ow)]]
 
 -- | Take a screenshot of a portion of a screen around the mouse pointer.
 screenShot
@@ -174,6 +146,31 @@ screenShot gui = do
                 Just px -> return px
                 Nothing -> return pxbuf
         else return pxbuf
+  where
+    -- | Returns the adjusted value of 'x' with a guarantee that it fits
+    -- between 'mn' and 'mx'.
+    ensureLimits
+        :: Ord a
+        => a -> a -> a -> a
+    ensureLimits x mn mx = min mx (max x mn)
+    -- | Returns the adjusted size from the origin (based on the given size and
+    -- the maximum size).
+    computeSize
+        :: (Num a, Ord a)
+        => a -> a -> a -> a
+    computeSize o s m = 
+        if o + s <= m
+            then s
+            else m - o
+    -- | Return true if two line segments overlap (if [x, xw] and [o, ow]
+    -- overlap). TODO: wrap the line segments in a type!
+    overlap
+        :: (Num a, Ord a)
+        => a -> a -> a -> a -> Bool
+    overlap x xw o ow = 
+        or
+            [ and [(x <= o), (x + xw >= o)]
+            , and [(x <= o + ow), (x + xw >= o + ow)]]
 
 -- | Take OCR'd text from GUI and translate it by using translation web service.
 translateText
