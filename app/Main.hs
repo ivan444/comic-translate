@@ -4,41 +4,19 @@
 
 module Main where
 
+import Comic.OCR
+import Comic.Pixbuf
+import Comic.Translate
 import Control.Concurrent (forkIO)
 import Control.Monad.Trans (liftIO)
-import Prelude hiding (readFile)
-import System.Environment
-import Data.Array.MArray
-import Data.ByteString hiding (putStrLn, unpack)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
-import Data.ByteString.Unsafe
-import Data.Text as T
-import Data.Text.IO as T
-import Data.Text.Encoding as T
-import Data.Word
-import Foreign.Marshal.Alloc
-import Graphics.UI.Gtk
-import Graphics.UI.Gtk.Gdk.EventM
-import Graphics.UI.Gtk.Gdk.Pixbuf
-import Graphics.UI.Gtk.Gdk.Screen
-import Graphics.UI.Gtk.Windows.OffscreenWindow
-import Graphics.UI.Gtk.Builder
-import qualified System.Glib.UTFString as Glib
-import qualified Data.Vector.Unboxed as V
-import Graphics.UI.Gtk.Gdk.DrawWindow
-       (drawWindowGetWidth, drawWindowGetHeight)
-import Graphics.UI.Gtk.Abstract.Widget
-       (widgetSizeRequest, widgetTranslateCoordinates)
-import Data.Maybe (fromMaybe)
-import qualified Codec.Picture.Png as JP
-import qualified Codec.Picture.Types as JP
-import qualified Data.Map as Map
-import Data.Map ((!))
-import HFlags
-import Comic.OCR
-import Comic.Translate
+import Graphics.UI.Gtk  -- TODO: make it qualified or list the used functions
+import HFlags (defineFlag, initHFlags)
 import Paths_comictrans (getDataFileName)
+import Prelude hiding (readFile)
+import qualified Data.ByteString as B
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
+import qualified Data.Text.IO as T
 import qualified System.Console.ANSI as ColTerm
 
 defineFlag "ocr_lang" ("eng" :: T.Text) "Language of a text we want to OCR."
@@ -207,58 +185,7 @@ imageToPixbuf img = do
             return $ Just pxbf
         else return Nothing
 
-pixbufBytes :: Pixbuf -> IO B.ByteString
-pixbufBytes pixbuf = do
-    pbd <- pixbufGetPixels pixbuf :: IO (PixbufData Int Word8)
-    ws <- getElems pbd
-    width <- pixbufGetWidth pixbuf
-    height <- pixbufGetHeight pixbuf
-    nChannels <- pixbufGetNChannels pixbuf
-    rowstride <- pixbufGetRowstride pixbuf
-    let m = mapBytes ws width height nChannels rowstride
-    let img = pixbufImage m width height
-    return $ BL.toStrict $ JP.encodePng img
-
-mapBytes :: [Word8]
-         -> Int
-         -> Int
-         -> Int
-         -> Int
-         -> Map.Map (Int, Int) JP.PixelRGB8
-mapBytes xs width height nChannels rowstride = Map.fromList pixelList
-  where
-    pixelList :: [((Int, Int), JP.PixelRGB8)]
-    pixelList = 
-        let vs = V.fromList xs
-        in Prelude.map (buildPixel vs) coordinates
-    buildPixel :: V.Vector Word8 -> (Int, Int) -> ((Int, Int), JP.PixelRGB8)
-    buildPixel vs cord@(x,y) = 
-        let p = pixelOffset x y
-        in (cord, JP.PixelRGB8 (red p vs) (green p vs) (blue p vs))
-    pixelOffset :: Int -> Int -> Int
-    pixelOffset x y = y * rowstride + x * nChannels
-    red :: Int -> V.Vector Word8 -> JP.Pixel8
-    red p vs = vs V.! p
-    green :: Int -> V.Vector Word8 -> JP.Pixel8
-    green p vs = vs V.! (p + 1)
-    blue :: Int -> V.Vector Word8 -> JP.Pixel8
-    blue p vs = vs V.! (p + 2)
-    coordinates :: [(Int, Int)]
-    coordinates = 
-        [ (x, y)
-        | x <- [0 .. width - 1] 
-        , y <- [0 .. height - 1] ]
-
-pixbufImage :: Map.Map (Int, Int) JP.PixelRGB8
-            -> Int
-            -> Int
-            -> JP.Image JP.PixelRGB8
-pixbufImage m width height = JP.generateImage getPixel width height
-  where
-    getPixel :: Int -> Int -> JP.PixelRGB8
-    getPixel x y = m ! (x, y)
-
-ocrGuiImage :: Image -> IO Text
+ocrGuiImage :: Image -> IO T.Text
 ocrGuiImage img = do
     imgPxbf <- imageToPixbuf img
     case imgPxbf of

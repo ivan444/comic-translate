@@ -7,7 +7,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Ivan Krišto
 maintainer:          ivan.kristo@gmail.com
-copyright:           2016 Ivan Krišto
+copyright:           2017 Ivan Krišto
 category:            Comics
 build-type:          Simple
 -- extra-source-files:
@@ -17,21 +17,20 @@ data-files:          gui/comic-translate.xml
 library
   hs-source-dirs:      src
   exposed-modules:     Comic.OCR
+                     , Comic.Pixbuf
                      , Comic.Translate
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.7
                      , aeson
                      , array
                      , bytestring
+                     , containers
                      , gtk
-                     , mtl
-                     , glib
                      , HSH
                      , HTTP
-                     , hflags
                      , http-client
+                     , JuicyPixels
                      , lens
                      , lens-aeson
-                     , mtl
                      , text
                      , vector
                      , wreq
@@ -42,27 +41,13 @@ executable comictrans-exe
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , comictrans
                      , ansi-terminal
-                     , aeson
-                     , array
                      , bytestring
+                     , comictrans
                      , gtk
-                     , glib
-                     , mtl
-                     , HSH
-                     , HTTP
-                     , JuicyPixels
-                     , containers
-                     , vector
                      , hflags
-                     , http-client
-                     , lens
-                     , lens-aeson
                      , mtl
                      , text
-                     , vector
-                     , wreq
   default-language:    Haskell2010
 
 test-suite comictrans-test
