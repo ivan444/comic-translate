@@ -27,6 +27,13 @@ class Translator a  where
         -> OriginalText
         -> IO T.Text
 
+data NoopTranslator =
+    NoopTranslator 
+
+-- | Translator which returns the text in its original form. A dummy translator implementation.
+instance Translator NoopTranslator where
+    translate _ _ _ originalText = return originalText
+
 data YandexClient = YandexClient
     { apiKey :: String
     } 
