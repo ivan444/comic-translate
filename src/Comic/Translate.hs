@@ -27,13 +27,14 @@ class Translator a  where
         -> OriginalText
         -> IO T.Text
 
+-- | Translator which returns the text in its original form. A dummy translator implementation.
 data NoopTranslator =
     NoopTranslator 
 
--- | Translator which returns the text in its original form. A dummy translator implementation.
 instance Translator NoopTranslator where
     translate _ _ _ originalText = return originalText
 
+-- | Translate text from the source language to the destination language using Yandex web service. 
 data YandexClient = YandexClient
     { apiKey :: String
     } 
@@ -43,7 +44,6 @@ instance Translator YandexClient where
       where
         (YandexClient apiKey) = translator
 
--- | Translate text from the source language to the destination language using Yandex web service. 
 yandexTranslate apiKey sourceLang destLang text = 
     (do let translateParams = 
                 urlEncodeVars
