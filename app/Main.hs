@@ -7,8 +7,11 @@ module Main where
 import Comic.OCR
 import Comic.Pixbuf
 import Comic.Translate
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, setNumCapabilities)
 import Control.Monad.Trans (liftIO)
+import Control.Monad (when)
+import Control.Concurrent.MVar (MVar(..), newMVar, swapMVar, readMVar)
+import Data.Maybe (fromJust, isJust)
 import Graphics.UI.Gtk  -- TODO: make it qualified or list the used functions
 import HFlags (defineFlag, initHFlags)
 import Paths_comictrans (getDataFileName)
@@ -43,6 +46,15 @@ data GUI = GUI
     , source :: Image
     } 
 
+-- | Cached translated screenshoot.
+data OcrCache = OcrCache
+    { imgContent :: Maybe B.ByteString
+    , 
+      -- | OCR of the screenshot. A screenshot requires a cache hit to be OCR'd
+      -- (to avoid OCR-in every frame).
+      ocr :: Maybe T.Text
+    } 
+
 yandexApiKey = 
     "trnsl.1.1.20141206T232937Z.afa78ec902bc2385.64360501ae9af320dd9d69ccb190b091299abc2f"
 
@@ -51,6 +63,8 @@ main
     :: IO ()
 main = do
     $initHFlags "Desktop app for realtime translation of web comics"
+    -- Limit the number of threads
+    setNumCapabilities 2
     initGUI
     -- Load the GUI from the XML file
     builder <- builderNew
@@ -58,9 +72,10 @@ main = do
     guiXml <- B.readFile guiXmlFilePath
     builderAddFromString builder $ T.decodeUtf8 guiXml
     gui <- buildGUI builder
-    bindGuiEvents gui (YandexClient yandexApiKey)
+    ocrCache <- newMVar (OcrCache Nothing Nothing)
+    bindGuiEvents gui (YandexClient yandexApiKey) ocrCache
     window <- builderGetObject builder castToWindow ("translatorWin" :: String)
-    on window deleteEvent $ liftIO (mainQuit >> return False)
+    window `on` deleteEvent $ liftIO (mainQuit >> return False)
     widgetShowAll window
     mainGUI
 
@@ -81,11 +96,11 @@ buildGUI builder = do
 
 bindGuiEvents
     :: Translator a
-    => GUI -> a -> IO HandlerId
-bindGuiEvents gui translator = do
+    => GUI -> a -> MVar OcrCache -> IO HandlerId
+bindGuiEvents gui translator ocrCache = do
     Just screen <- screenGetDefault
     timeoutAdd (setSourceImage gui >> return True) 25
-    timeoutAdd (translateText gui translator) 1000
+    timeoutAdd (translateText gui translator ocrCache) 500
 
 -- | Take a screenshot and set it in the image GUI widget.
 setSourceImage
@@ -153,28 +168,30 @@ screenShot gui = do
 -- | Take OCR'd text from GUI and translate it by using translation web service.
 translateText
     :: Translator a
-    => GUI -> a -> IO Bool
-translateText gui translator = do
+    => GUI -> a -> MVar OcrCache -> IO Bool
+translateText gui translator ocrCache = do
     let img = (source gui)
     forkIO $
-        do t <- ocrGuiImage img
-           transText <- 
-               translate
-                   translator
-                   flags_translation_source_lang
-                   flags_translation_destination_lang
-                   t
-           ColTerm.setSGR
-               [ ColTerm.SetColor
-                     ColTerm.Foreground
-                     ColTerm.Dull
-                     ColTerm.Magenta]
-           T.putStrLn t
-           ColTerm.setSGR
-               [ColTerm.SetColor ColTerm.Foreground ColTerm.Vivid ColTerm.Red]
-           T.putStrLn transText
-           ColTerm.setSGR [ColTerm.Reset]
+        do ocrText <- ocrGuiImage img ocrCache
+           when
+               (isJust ocrText)
+               (translate
+                    translator
+                    flags_translation_source_lang
+                    flags_translation_destination_lang
+                    (fromJust ocrText) >>=
+                printTranslation (fromJust ocrText))
     return True
+  where
+    printTranslation :: T.Text -> T.Text -> IO ()
+    printTranslation ocrText translation = do
+        ColTerm.setSGR
+            [ColTerm.SetColor ColTerm.Foreground ColTerm.Dull ColTerm.Magenta]
+        T.putStrLn ocrText
+        ColTerm.setSGR
+            [ColTerm.SetColor ColTerm.Foreground ColTerm.Vivid ColTerm.Green]
+        T.putStrLn translation
+        ColTerm.setSGR [ColTerm.Reset]
 
 imageToPixbuf :: Image -> IO (Maybe Pixbuf)
 imageToPixbuf img = do
@@ -185,11 +202,26 @@ imageToPixbuf img = do
             return $ Just pxbf
         else return Nothing
 
-ocrGuiImage :: Image -> IO T.Text
-ocrGuiImage img = do
+ocrGuiImage :: Image -> MVar OcrCache -> IO (Maybe T.Text)
+ocrGuiImage img ocrCache = do
     imgPxbf <- imageToPixbuf img
     case imgPxbf of
         Just px -> do
             imgContent <- pixbufBytes px
-            ocrImage imgContent flags_tesseract_data_dir flags_ocr_lang
-        Nothing -> return $ T.pack "-"
+            cache <- readMVar ocrCache
+            newCache <- cachedOcr imgContent cache
+            swapMVar ocrCache newCache
+            return $ ocr newCache
+        Nothing -> return Nothing
+  where
+    cachedOcr :: B.ByteString -> OcrCache -> IO OcrCache
+    -- Not yet cache hit, don't OCR
+    cachedOcr img (OcrCache Nothing _) = return (OcrCache (Just img) Nothing)
+    cachedOcr img (OcrCache (Just cImg) Nothing)
+      | cImg == img = do
+          txt <- ocrImage img flags_tesseract_data_dir flags_ocr_lang
+          return (OcrCache (Just img) (Just txt))
+      | otherwise = return (OcrCache (Just img) Nothing)
+    cachedOcr img (OcrCache (Just cImg) (Just txt))
+      | cImg == img = return (OcrCache (Just img) (Just txt))
+      | otherwise = return (OcrCache (Just img) Nothing)
